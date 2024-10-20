@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>butter滤波器参数选择</title>
+    <style>
+        #plot{
+        width: 100vw;
+        height: 80vh;
+        }
+        .slider {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 8vh;
+        }
+        .slider_show{
+            font-size: 40px;
+            font-weight: bold;
+        }
+        .slider_label{
+            font-size: 40px;
+        }
+        
+    </style>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+<div id="plot"></div>
+
+<div class="slider">
+<label class="slider_label" for="param1">N(butter滤波阶数):<span class="slider_show" id="param1_value">1</span></label>
+<input type="range" id="param1" min="1" max="15" step="1" value="1">
+
+<label class="slider_label" for="param2">Wn(butter截止频率):<span class="slider_show" id="param2_value">0.005</span></label>
+<input type="range" id="param2" min="0.005" max="0.3" step="0.005" value="0.005">
+
+
+<label class="slider_label" for="param3">Alpha(EWMA平滑因子):<span class="slider_show" id="param3_value">0.005</span></label>
+<input type="range" id="param3" min="0.005" max="0.3" step="0.005" value="0.005">
+
+</div>
+
+<script type="text/javascript" src="qwebchannel.js"></script>
+<script>
+new QWebChannel(qt.webChannelTransport, function(channel) {
+            window.backend = channel.objects.backend;
+ });
+    
+var data = undefined;
+var N = undefined;
+var config = {scrollZoom: true};
+    
+// 绘制图表
+function plotGraph(data) {
+    
+    const param1 = parseInt(document.getElementById('param1').value);
+    const param2 = parseFloat(document.getElementById('param2').value);
+    const param3 = parseFloat(document.getElementById('param3').value);
+    
+const yMin = Math.min(...data.y2);
+const yMax = Math.max(...data.y2);
+
+// 计算数据范围
+const yRange = yMax - yMin;
+
+// 设置 y 轴的最小值和最大值
+const yAxisMin = yMin - yRange / 20;
+const yAxisMax = yMax + yRange / 20;
+    
+    const trace1 = {
+        x: data.x,
+        y: data.y1,
+        type: 'scatter',
+        name: "raw DTG",
+        mode: 'lines', 
+        line: {
+        color: 'rgba(0, 0, 255, 0.25)', 
+        width: 1
+    }
+    };
+    
+    const trace2 = {
+        x: data.x,
+        y: data.y2,
+        type: 'scatter',
+        name: "filter DTG",
+        mode: 'lines', 
+        line: {
+        color: 'red', 
+        width: 2 
+    }
+    }
+
+    const layout = {
+        title: {
+        text: `N=${param1}  Wn=${param2}  Alpha=${param3}`,
+        font: {
+            family: "Times New Roman",
+            size: 50
+        }
+    },
+        xaxis: { title: {text: 'T/K', font:{family: "Times New Roman", size: 40} }, 
+               tickfont: {
+            family: 'Times New Roman',
+            size: 30  // 设置 x 轴刻度值的字体大小
+        }},
+        yaxis: { automargin: true, title: {text: 'DTG/s<sup>-1</sup>', font:{family: "Times New Roman", size: 40}, standoff: 20 }, 
+               tickfont: {
+            family: 'Times New Roman',
+            size: 30,
+        }, range: [yAxisMin, yAxisMax]}, 
+        legend: {
+        font: {
+            family: 'Times New Roman',
+            size: 20
+        }
+    },
+        plot_bgcolor: 'rgba(237, 237, 237, 0.9)',
+        paper_bgcolor: 'white'
+    };
+
+    Plotly.react('plot', [trace1, trace2], layout, config);
+}
+function InitPlot(){    
+let retries = 0;
+new Promise((resolve, reject) => {
+        const intervalId = setInterval(async () => {
+            if (backend !== null && backend !== undefined) {
+                clearInterval(intervalId); 
+                backend.init_param();
+            } else {
+                retries++;
+                if (retries >= 20) {
+                    clearInterval(intervalId); 
+                    reject('Value not found within the maximum number of retries.'); 
+                }
+            }
+        }, 1000);
+    });    
+
+let retriessss = 0;
+new Promise((resolve, reject) => {
+        const intervalId = setInterval(async () => {
+            if (N !== null && N !== undefined) {
+                clearInterval(intervalId); 
+                document.getElementById('param1_value').textContent = N;
+                document.getElementById('param1').value = N;
+                document.getElementById('param2_value').textContent = Wn;
+                document.getElementById('param2').value = Wn;
+                document.getElementById('param3_value').textContent = alpha;
+                document.getElementById('param3').value = alpha;
+            } else {
+                retriessss++;
+                if (retriessss >= 20) {
+                    clearInterval(intervalId); 
+                    reject('Value not found within the maximum number of retries.'); 
+                }
+            }
+        }, 1000);
+    });    
+    
+    
+let retriess = 0;
+new Promise((resolve, reject) => {
+        const intervalId = setInterval(async () => {
+            if (data !== null && data !== undefined) {
+                clearInterval(intervalId); 
+                plotGraph(data); 
+            } else {
+                retriess++;
+                if (retriess >= 20) {
+                    clearInterval(intervalId); 
+                    reject('Value not found within the maximum number of retries.'); 
+                }
+            }
+        }, 1000);
+    });
+}
+
+// 更新滑动条的值和图表
+function updatePlot() {
+    const param1 = parseInt(document.getElementById('param1').value);
+    const param2 = parseFloat(document.getElementById('param2').value);
+    const param3 = parseFloat(document.getElementById('param3').value);
+
+    document.getElementById('param1_value').textContent = param1;
+    document.getElementById('param2_value').textContent = param2;
+    document.getElementById('param3_value').textContent = param3;
+
+    backend.process_request(param1, param2, param3);
+    let retriesss = 0;
+    new Promise((resolve, reject) => {
+            const intervalId = setInterval(async () => {
+                if (data !== null && data !== undefined) {
+                    clearInterval(intervalId); 
+                    var n_data = JSON.parse(JSON.stringify(data));
+                    plotGraph(n_data);
+                } else {
+                    retriesss++;
+                    if (retriesss >= 20) {
+                        clearInterval(intervalId); 
+                        reject('Value not found within the maximum number of retries.'); 
+                    }
+                }
+            }, 1000);
+        });
+}
+
+// 初始化图表
+document.getElementById('param1').addEventListener('input', updatePlot);
+document.getElementById('param2').addEventListener('input', updatePlot);
+document.getElementById('param3').addEventListener('input', updatePlot);
+
+InitPlot();
+</script>
+</body>
+</html>

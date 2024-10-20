@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动力区间选取</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+ body {
+            display: flex;
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+            height: 100vh; /* 使页面高度填满整个视口 */
+            margin: 0;
+            flex-direction: column;
+        }
+
+        form {
+            display: flex;
+            flex-direction: row; /* 将 label 和 select 垂直排列 */
+            align-items: center; /* 将 label 和 select 在垂直方向上居中 */
+        }
+
+        label, select {
+            margin-bottom: 10px; 
+            font-size: 40px;
+            font-family: "Times New Roman"
+        }
+        
+        select {
+            width: 200px;
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            appearance: none; /* 隐藏默认的下拉箭头 */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        /* 添加一个自定义的下拉箭头 */
+        .select-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .select-container::after {
+            content: "▼";
+            position: absolute;
+            right: 15px;
+            top: 45%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            font-size: 40px;
+            color: #333;
+        }
+
+        .select-container select {
+            padding-right: 30px; /* 为了给自定义箭头留出空间 */
+        }
+        
+    </style>
+</head>
+<body>
+    <form>
+        <label for="points">选择动力区间类别:</label>
+        <div class="select-container">
+        <select name="points" id="points">
+            <option value="coal_pyrolysis">煤热解</option>
+            <option value="carbon_combustion">碳燃烧</option>
+        </select>
+        </div>
+    </form>
+    <div id="plot" style="width: 100vw; height: 90vh;"></div>
+    <script type="text/javascript" src="qwebchannel.js"></script>
+    <script>
+        new QWebChannel(qt.webChannelTransport, function(channel) {
+            window.backend = channel.objects.backend;
+ });
+         var data = undefined;
+
+function InitPlot(){
+    const config = {scrollZoom: true};
+                const trace1 = {
+                    x: data.x,
+                    y: data.y,
+                    mode: "line",
+                    name: "filter DTG",
+                    line: {
+        color: 'red', 
+        width: 2 
+    }
+                };
+                  const layout = {
+                      hovermode: 'closest',
+        xaxis: { title: {text: 'T/K', font:{family: "Times New Roman", size: 40} }, 
+               tickfont: {
+            family: 'Times New Roman',
+            size: 30 
+        }},
+        yaxis: { automargin: true,title: {text: 'DTG/s<sup>-1</sup>', font:{family: "Times New Roman", size: 40}, standoff: 20 }, 
+               tickfont: {
+            family: 'Times New Roman',
+            size: 30,
+        }}, 
+        legend: {
+        font: {
+            family: 'Times New Roman',
+            size: 20
+        }
+    },
+        plot_bgcolor: 'rgba(237, 237, 237, 0.9)',
+        paper_bgcolor: 'white'
+    };
+    Plotly.newPlot('plot', [trace1], layout, config);
+    plot_points(coal_pyrolysis, "brown");
+    
+const PlotDiv = document.getElementById('plot');
+var clicked = false;
+var current_point = 1;
+var traceIndex = 0;
+window.point_list = coal_pyrolysis;
+window.point_color = "brown";
+window.selectedValue = "coal_pyrolysis"
+Plotly.restyle("plot", "hoverinfo", "none", [0]);
+
+PlotDiv.on('plotly_hover', function(eventData) {
+    if (eventData.points.length >1){
+    traceIndex = Math.max(eventData.points[0].curveNumber, eventData.points[1].curveNumber);
+    } else {
+        traceIndex = eventData.points[0].curveNumber;
+    }
+});
+PlotDiv.on('plotly_click', function(eventData) {
+            const pointIndex = eventData.points[0].pointIndex;
+            if (clicked){
+                    point_list[current_point - 1] = pointIndex;
+                    plot_points(point_list, point_color);
+                    Plotly.restyle("plot", "marker.size", 20, [current_point]);
+                    backend.set_range(selectedValue, point_list[0], point_list[1]);
+                    clicked = false;
+                    Plotly.restyle("plot", "hoverinfo", "none", [0]);
+                    Plotly.restyle("plot", "hoverinfo", "all", [1]);
+                    Plotly.restyle("plot", "hoverinfo", "all", [2]);
+                }  else if (traceIndex !== 0) {
+                Plotly.restyle("plot", "marker.size", 30, [traceIndex]);
+                current_point = traceIndex;
+                clicked = true;
+                Plotly.restyle("plot", "hoverinfo", "all", [0]);
+                Plotly.restyle("plot", "hoverinfo", "none", [1]);
+                Plotly.restyle("plot", "hoverinfo", "none", [2]);
+            }
+        });
+}
+
+        
+let retries = 0;
+new Promise((resolve, reject) => {
+        const intervalId = setInterval(async () => {
+            if (backend !== null && backend !== undefined) {
+                clearInterval(intervalId); 
+                backend.init_range();
+            } else {
+                retries++;
+                if (retries >= 20) {
+                    clearInterval(intervalId); 
+                    reject('Value not found within the maximum number of retries.'); 
+                }
+            }
+        }, 1000);
+    });
+
+let retriess = 0;
+new Promise((resolve, reject) => {
+        const intervalId = setInterval(async () => {
+            if (data !== null && data !== undefined) {
+                clearInterval(intervalId); 
+                InitPlot();
+            } else {
+                retriess++;
+                if (retriess >= 20) {
+                    clearInterval(intervalId); 
+                    reject('Value not found within the maximum number of retries.'); 
+                }
+            }
+        }, 1000);
+    });
+
+        
+function plot_points(point_list, point_color){
+       const trace2 = {
+            x: [data.x[point_list[0]]],
+            y: [data.y[point_list[0]]],
+            mode: 'markers',
+            name: 'feature point',
+            marker: {
+                color: point_color,
+                size: 20,
+                symbol: "x"
+                
+            }
+        };
+    const trace3 = {
+            x: [data.x[point_list[1]]],
+            y: [data.y[point_list[1]]],
+            mode: 'markers',
+            name: 'feature point',
+            marker: {
+                color: point_color,
+                size: 20,
+                symbol: "x"
+            }
+        };
+    const trace4 = {
+         x: [data.x[point_list[0]], data.x[point_list[1]]],
+        y: [data.y[point_list[0]], data.y[point_list[1]]],
+        mode: 'lines',
+        line: {
+            color: point_color,
+            width: 1.5
+        },
+        showlegend:false,
+        hoverinfo: "none",
+        selectable: false
+    };
+    var x1 = data.x[point_list[0]];
+    var x2 = data.x[point_list[1]];
+    var y1 = data.y[point_list[0]];
+    var y2 = data.y[point_list[1]];
+    
+    if (x2 < x1) {
+    [x1, x2] = [x2, x1];
+    [y1, y2] = [y2, y1];
+}
+    
+    const trace5 = {
+    x: [x1, ...data.x.slice(data.x.indexOf(x1), data.x.indexOf(x2) + 1), x2],
+    y: [y1, ...data.y.slice(data.x.indexOf(x1), data.x.indexOf(x2) + 1), y2],
+    fill: 'toself',
+    fillcolor: 'rgba(255, 100, 100, 0.3)',  // 设置填充颜色和透明度
+    line: {
+        color: 'transparent'  // 使边界线不可见
+    },
+        showlegend:false,
+        hoverinfo: "none",
+        selectable: false
+    };
+
+    Plotly.addTraces("plot", trace2);
+    Plotly.addTraces("plot", trace3);
+      Plotly.addTraces("plot", trace4);
+      Plotly.addTraces("plot", trace5);
+    
+    const plotDiv = document.getElementById('plot');
+    const numberOfTraces = plotDiv.data.length;
+    if (numberOfTraces > 5){
+        Plotly.deleteTraces('plot', 1);  
+        Plotly.deleteTraces('plot', 1);
+        Plotly.deleteTraces('plot', 1);  
+        Plotly.deleteTraces('plot', 1);  
+    };
+}
+
+const selectElement = document.getElementById('points');
+function handleSelectChange(event) {
+            selectedValue = event.target.value;
+            if (selectedValue == "coal_pyrolysis"){
+                point_list = coal_pyrolysis;
+                point_color = "brown";
+            } else if (selectedValue == "carbon_combustion") {
+                point_list = carbon_combustion;
+                point_color = "black";
+            };
+            plot_points(point_list, point_color);
+        }
+selectElement.addEventListener('change', handleSelectChange);
+        
+    </script>
+</body>
+</html>

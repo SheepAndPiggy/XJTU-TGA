@@ -1,0 +1,74 @@
+{
+   "load_data": {
+      "file_path": "D:/Users/DanYang/Desktop/zty.txt",
+      "delimiter": ",",
+      "encoding": "gbk",
+      "delta_t": 1,
+      "columns": [
+         "t",
+         "T",
+         "dw",
+         "raw_DTG",
+         "filter_DTG"
+      ]
+   },
+   "filter_data": {
+      "N": 6,
+      "Wn": 0.005,
+      "btype": "low",
+      "alpha": 0.225,
+      "w0": 10
+   },
+   "keypoint_select": {
+      "water_separation": [
+         0,
+         0,
+         0
+      ],
+      "coal_pyrolysis": [
+         0,
+         0,
+         0
+      ],
+      "carbon_combustion": [
+         0,
+         0,
+         0
+      ]
+   },
+   "parsed_data": {
+      "Ti": 0,
+      "Tf": 0,
+      "Tp": 0,
+      "Vp": 0,
+      "Vmean": 0
+   },
+   "interval_select": {
+      "coal_pyrolysis": {
+         "range": [
+            0,
+            0
+         ],
+         "data": {
+            "A": 0,
+            "b": 0,
+            "R": 0,
+            "E": 0,
+            "k0": 0
+         }
+      },
+      "carbon_combustion": {
+         "range": [
+            0,
+            0
+         ],
+         "data": {
+            "A": 0,
+            "b": 0,
+            "R": 0,
+            "E": 0,
+            "k0": 0
+         }
+      }
+   }
+}

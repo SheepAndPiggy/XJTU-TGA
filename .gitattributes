@@ -1,0 +1,7 @@
+*.html linguist-vendored=true
+filter_choose.html linguist-language=JavaScript
+point_choose.html linguist-language=JavaScript
+range_choose.html linguist-language=JavaScript
+index.html linguist-language=HTML
+*.js linguist-language=JavaScript
+*.py linguist-language=python

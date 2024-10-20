@@ -1,0 +1,74 @@
+{
+   "load_data": {
+      "file_path": "C:/Users/DanYang/PycharmProjects/XJTU-TGA/src/dataset/zdw.txt",
+      "delimiter": ",",
+      "encoding": "gbk",
+      "delta_t": 1,
+      "columns": [
+         "t",
+         "T",
+         "dw",
+         "raw_DTG",
+         "filter_DTG"
+      ]
+   },
+   "filter_data": {
+      "N": 6,
+      "Wn": 0.015,
+      "btype": "low",
+      "alpha": 0.235,
+      "w0": 9.4
+   },
+   "keypoint_select": {
+      "water_separation": [
+         280.0,
+         574.0,
+         1605.0
+      ],
+      "coal_pyrolysis": [
+         2638.0,
+         3324.0,
+         3624.0
+      ],
+      "carbon_combustion": [
+         3800.0,
+         4160.0,
+         6487.0
+      ]
+   },
+   "parsed_data": {
+      "Ti": 611.8120735467863,
+      "Tf": 719.6408157466162,
+      "Tp": 657.72785,
+      "Vp": -0.07689316685074231,
+      "Vmean": 3.888140135591988
+   },
+   "interval_select": {
+      "coal_pyrolysis": {
+         "range": [
+            2689.0,
+            3702.0
+         ],
+         "data": {
+            "A": 7007.290301235697,
+            "b": 3.3343958332465076,
+            "R": 0.9612843409984249,
+            "E": 58.25861156447359,
+            "k0": 28.06142432168369
+         }
+      },
+      "carbon_combustion": {
+         "range": [
+            3764.0,
+            4134.0
+         ],
+         "data": {
+            "A": 11489.767076876873,
+            "b": 10.297851777586073,
+            "R": 0.9841805648902325,
+            "E": 95.52592347715432,
+            "k0": 29668.815131476214
+         }
+      }
+   }
+}
